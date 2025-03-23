@@ -89,18 +89,17 @@ class Bot(Client):
 from flask import Flask
 import threading
 
-flask_app = Flask(__name__)
+app = Flask(__name__)
 
-@flask_app.route('/')
+@app.route('/')
 def home():
     return "Bot is running!", 200
 
 def run_flask():
-    flask_app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000)
 
-# Start Flask in a separate thread
-threading.Thread(target=run_flask, daemon=True).start()
-
+if __name__ == "__main__":
+    threading.Thread(target=run_flask).start()
 # Now, start the bot
 app = Bot()
 app.run()
