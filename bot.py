@@ -85,8 +85,23 @@ class Bot(Client):
                 yield message
                 current += 1
 
+# Flask Health Check Server
+from flask import Flask
+import threading
 
-        
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def home():
+    return "Bot is running!", 200
+
+def run_flask():
+    flask_app.run(host="0.0.0.0", port=8000)
+
+# Start Flask in a separate thread
+threading.Thread(target=run_flask, daemon=True).start()
+
+# Now, start the bot
 app = Bot()
 app.run()
 
