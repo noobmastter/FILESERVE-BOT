@@ -13,7 +13,7 @@ from pytz import timezone
 from pyrogram.errors import BadRequest, Unauthorized
 
 if WEBHOOK:
-    from plugins import web_server 
+    from plugins.web_server import web_server  # Import the function directly
     from aiohttp import web
 
 # Logging configurations
@@ -56,7 +56,7 @@ class Bot(Client):
 
         # Start the web server for Koyeb health check
         if WEBHOOK:
-            app = await web_server.web_server()  # Get web app instance
+            app = await web_server()  # Call the function directly
             self.app_runner = web.AppRunner(app)
             await self.app_runner.setup()
             await web.TCPSite(self.app_runner, "0.0.0.0", PORT).start()  # Uses correct PORT
