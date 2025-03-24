@@ -56,9 +56,10 @@ class Bot(Client):
 
         # Start the web server for Koyeb health check
         if WEBHOOK:
-            self.app_runner = web.AppRunner(web_server.app)  # Use the web server app
+            app = await web_server.web_server()  # Get web app instance
+            self.app_runner = web.AppRunner(app)
             await self.app_runner.setup()
-            await web.TCPSite(self.app_runner, "0.0.0.0", PORT).start()
+            await web.TCPSite(self.app_runner, "0.0.0.0", PORT).start()  # Uses correct PORT
 
         logging.info(f"{me.first_name} started with Pyrogram v{__version__} (Layer {layer}) on @{me.username}.")
 
