@@ -57,6 +57,12 @@ class Bot(Client):
             await web_server.web_server()  # Starts the web server for Koyeb
         logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
         #started_telethroid() # installation Telethroid Library   
+        
+        # Start the web server for Koyeb health check
+            app_runner = web.AppRunner(await web_server.web_server())
+            await app_runner.setup()
+            bind_address = "0.0.0.0"
+            await web.TCPSite(app_runner, bind_address, PORT).start()
         if LOG_CHANNEL:
             try:
                 await self.send_message(LOG_CHANNEL, text=f"<b>{me.mention} Iꜱ Rᴇsᴛᴀʀᴛᴇᴅ !!\n\n📅 Dᴀᴛᴇ : <code>{date}</code>\n⏰ Tɪᴍᴇ : <code>{time}</code>\n🌐 Tɪᴍᴇᴢᴏɴᴇ : <code>{TIMEZONE}</code>\n\n🉐 Vᴇʀsɪᴏɴ : <code>v{__version__} (Layer {layer})</code></b>")  # Repo : {__repo__}\n Copyright : {__copyright__}           
