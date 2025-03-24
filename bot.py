@@ -1,12 +1,11 @@
-import os, math, logging
+import os, logging
 import logging.config
 from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
-#from Telethroid import started_telethroid
 from database.ia_filterdb import Media
 from database.users_chats_db import db
 from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, PORT, WEBHOOK
-from utils import temp, __repo__, __license__, __copyright__
+from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 from datetime import datetime
@@ -17,13 +16,13 @@ if WEBHOOK:
     from plugins import web_server 
     from aiohttp import web
 
-# Get logging configurations
+# Logging configurations
 logging.config.fileConfig("logging.conf")
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("cinemagoer").setLevel(logging.ERROR)
 
 LOGGER = logging.getLogger(__name__)
-TIMEZONE = (os.environ.get("TIMEZONE", "Asia/Kolkata"))
+TIMEZONE = os.environ.get("TIMEZONE", "Asia/Kolkata")
 
 class Bot(Client):
 
@@ -37,6 +36,7 @@ class Bot(Client):
             plugins={"root": "plugins"},
             sleep_threshold=10,
         )
+        self.app_runner = None  # Store web server runner
 
     async def start(self):
         b_users, b_chats = await db.get_banned()
@@ -53,29 +53,32 @@ class Bot(Client):
         curr = datetime.now(timezone(TIMEZONE))
         date = curr.strftime('%d %B, %Y')
         time = curr.strftime('%I:%M:%S %p')
-        if WEBHOOK:
-            await web_server.web_server()  # Starts the web server for Koyeb
-        logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
-        #started_telethroid() # installation Telethroid Library   
-        
+
         # Start the web server for Koyeb health check
-            app_runner = web.AppRunner(await web_server.web_server())
-            await app_runner.setup()
-            bind_address = "0.0.0.0"
-            await web.TCPSite(app_runner, bind_address, PORT).start()
+        if WEBHOOK:
+            self.app_runner = web.AppRunner(web_server.app)  # Use the web server app
+            await self.app_runner.setup()
+            await web.TCPSite(self.app_runner, "0.0.0.0", PORT).start()
+
+        logging.info(f"{me.first_name} started with Pyrogram v{__version__} (Layer {layer}) on @{me.username}.")
+
         if LOG_CHANNEL:
             try:
-                await self.send_message(LOG_CHANNEL, text=f"<b>{me.mention} Iꜱ Rᴇsᴛᴀʀᴛᴇᴅ !!\n\n📅 Dᴀᴛᴇ : <code>{date}</code>\n⏰ Tɪᴍᴇ : <code>{time}</code>\n🌐 Tɪᴍᴇᴢᴏɴᴇ : <code>{TIMEZONE}</code>\n\n🉐 Vᴇʀsɪᴏɴ : <code>v{__version__} (Layer {layer})</code></b>")  # Repo : {__repo__}\n Copyright : {__copyright__}           
+                await self.send_message(
+                    LOG_CHANNEL, 
+                    text=f"<b>{me.mention} Iꜱ Rᴇsᴛᴀʀᴛᴇᴅ !!\n\n📅 Dᴀᴛᴇ : <code>{date}</code>\n⏰ Tɪᴍᴇ : <code>{time}</code>\n🌐 Tɪᴍᴇᴢᴏɴᴇ : <code>{TIMEZONE}</code>\n\n🉐 Vᴇʀsɪᴏɴ : <code>v{__version__} (Layer {layer})</code></b>"
+                )
             except Unauthorized:             
                 LOGGER.warning("Bot isn't able to send message to LOG_CHANNEL")
             except BadRequest as e:
                 LOGGER.error(e)
-                                         
 
     async def stop(self, *args):
+        if self.app_runner:
+            await self.app_runner.cleanup()  # Clean up the web server
         await super().stop()
         me = await self.get_me()
-        logging.info(f"{me.first_name} is_...  ♻️Restarting...")
+        logging.info(f"{me.first_name} is shutting down...")
 
     async def iter_messages(self, chat_id: Union[int, str], limit: int, offset: int = 0) -> Optional[AsyncGenerator["types.Message", None]]:                       
         current = offset
@@ -88,11 +91,5 @@ class Bot(Client):
                 yield message
                 current += 1
 
-
 app = Bot()
 app.run()
-
-
-
-
-
